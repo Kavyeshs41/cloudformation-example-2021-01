@@ -1,10 +1,12 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::SecretsManager-2020-07-23
-Description: "This is an example template to demonstrate CloudFormation resources for Secrets Manager"
+Description: "This is an example template to demonstrate CloudFormation resources"
+
 Mappings:
   RegionMap:
     us-east-1:
       AMI: "ami-0885b1f6bd170450c"
+    
 Resources:
     
     MyInternetGateway:
@@ -47,6 +49,15 @@ Resources:
         CidrBlock: 10.0.0.0/16
         EnableDnsHostnames: true
         EnableDnsSupport: true 
+        Tags:
+          - Key: Name
+            Value: TestProject
+          - Key: DevOpsOwner
+            Value: Kavyesh S
+          - Key: Region
+            Value: !Ref 'AWS::Region'
+          - Key: Environment
+            Value: Development
 
     # Subnet that the rotation Lambda and the RDS instance will be placed in 
     TestSubnet01:
@@ -59,6 +70,15 @@ Resources:
             - Fn::GetAZs: {Ref: 'AWS::Region'}
         VpcId:
           Ref: TestVPC
+        Tags:
+          - Key: Name
+            Value: TestProject
+          - Key: DevOpsOwner
+            Value: Kavyesh S
+          - Key: Region
+            Value: !Ref 'AWS::Region'
+          - Key: Environment
+            Value: Development
 
     TestSubnet02:
       Type: AWS::EC2::Subnet
@@ -70,6 +90,15 @@ Resources:
             - Fn::GetAZs: {Ref: 'AWS::Region'}
         VpcId:
           Ref: TestVPC
+        Tags:
+          - Key: Name
+            Value: TestProject
+          - Key: DevOpsOwner
+            Value: Kavyesh S
+          - Key: Region
+            Value: !Ref 'AWS::Region'
+          - Key: Environment
+            Value: Development
 
     #VPC endpoint that will enable the rotation Lambda to make api calls to Secrets Manager 
     SecretsManagerVPCEndpoint:
@@ -94,12 +123,8 @@ Resources:
         GenerateSecretString:
           SecretStringTemplate: '{"username": "admin"}'
           GenerateStringKey: 'password'
-          PasswordLength: 16
+          PasswordLength: 32
           ExcludeCharacters: '"@/\'
-        Tags:
-          -
-            Key: AppName
-            Value: MyApp
 
     #This is an RDS instance resource. Its master username and password use dynamic references to resolve values from 
     #SecretsManager. The dynamic reference guarantees that CloudFormation will not log or persist the resolved value 
@@ -109,6 +134,7 @@ Resources:
       Properties:
         AllocatedStorage: 20
         DBInstanceClass: db.t3.micro
+        DBInstanceIdentifier: my-test-rds
         Engine: mysql
         DBSubnetGroupName:
           Ref: MyDBSubnetGroup
@@ -117,6 +143,15 @@ Resources:
         BackupRetentionPeriod: 0
         VPCSecurityGroups:
           - !GetAtt TestVPC.DefaultSecurityGroup
+        Tags:
+          - Key: Name
+            Value: TestProject
+          - Key: DevOpsOwner
+            Value: Kavyesh S
+          - Key: Region
+            Value: !Ref 'AWS::Region'
+          - Key: Environment
+            Value: Development
 
     #Database subnet group for the RDS instance 
     MyDBSubnetGroup: 
@@ -157,39 +192,6 @@ Resources:
         RotationRules:
           AutomaticallyAfterDays: 30
 
-    ControlPortAddress:
-      Type: AWS::EC2::EIP
-      Properties:
-        Domain: vpc
-
-    AssociateControlPort:
-      Type: AWS::EC2::EIPAssociation
-      Properties:
-        AllocationId: !GetAtt ControlPortAddress.AllocationId
-        NetworkInterfaceId: !Ref controlXface
-
-    WebPortAddress:
-      Type: AWS::EC2::EIP
-      Properties:
-        Domain: vpc
-    
-    AssociateWebPort:
-      Type: AWS::EC2::EIPAssociation
-      Properties:
-        AllocationId: !GetAtt WebPortAddress.AllocationId
-        NetworkInterfaceId: !Ref webXface
-    
-    SSHSecurityGroup:
-      Type: AWS::EC2::SecurityGroup
-      Properties:
-        VpcId: !Ref TestVPC
-        GroupDescription: Enable SSH access via port 22
-        SecurityGroupIngress:
-        - CidrIp: 0.0.0.0/0
-          FromPort: 22
-          IpProtocol: tcp
-          ToPort: 22
-
     WebSecurityGroup:
       Type: AWS::EC2::SecurityGroup
       Properties:
@@ -200,52 +202,144 @@ Resources:
           FromPort: 80
           IpProtocol: tcp
           ToPort: 80
-
-    controlXface:
-      Type: AWS::EC2::NetworkInterface
-      Properties:
-        SubnetId: !Ref TestSubnet01
-        Description: Interface for controlling traffic such as SSH
-        GroupSet: 
-        - !Ref SSHSecurityGroup
-        SourceDestCheck: true
+        - CidrIp: 0.0.0.0/0
+          FromPort: 22
+          IpProtocol: tcp
+          ToPort: 22
         Tags:
-          -
-            Key: Network
-            Value: Control
+          - Key: Name
+            Value: TestProject
+          - Key: DevOpsOwner
+            Value: Kavyesh S
+          - Key: Region
+            Value: !Ref 'AWS::Region'
+          - Key: Environment
+            Value: Development
 
-    webXface:
-      Type: AWS::EC2::NetworkInterface
-      Properties:
-        SubnetId: !Ref TestSubnet01
-        Description: Interface for controlling traffic such as SSH
-        GroupSet: 
-        - !Ref WebSecurityGroup
-        SourceDestCheck: true
-        Tags:
-          -
-            Key: Network
-            Value: Web
-
-    Ec2Instance:
-      Type: AWS::EC2::Instance
+    DeployAppLaunchConfig:
+      Type: AWS::AutoScaling::LaunchConfiguration
       Properties:
         ImageId: !FindInMap [ RegionMap, !Ref 'AWS::Region', AMI ]
+        AssociatePublicIpAddress: true
+        InstanceType: t3.micro
         KeyName: my-test-key
-        NetworkInterfaces:
-          -
-            NetworkInterfaceId: !Ref controlXface
-            DeviceIndex: 0
-          -
-            NetworkInterfaceId: !Ref webXface
-            DeviceIndex: 1
-        Tags:
-          -
-            Key: Role
-            Value: Test Instance
+        SecurityGroups:
+          - !Ref WebSecurityGroup
         UserData:
-          Fn::Base64: !Sub |
-            #!/bin/bash -xe
-            sudo apt-get update -y
-            sudo apt-get install nginx -y
-            sudo service nginx start
+          Fn::Base64:
+            Fn::Sub: |
+              #!/bin/bash -xe
+              sudo apt-get update -y
+              sudo apt-get install nginx -y
+              sudo service nginx start
+              
+    DeployAppASG:
+      Type: AWS::AutoScaling::AutoScalingGroup
+      Properties:
+        VPCZoneIdentifier:
+          - !Ref TestSubnet01
+          - !Ref TestSubnet02
+        DesiredCapacity: 2
+        LaunchConfigurationName: !Ref DeployAppLaunchConfig
+        TargetGroupARNs: [ !Ref WebAppTargetGroup ]
+        MaxSize: 4
+        MinSize: 2
+        Tags:
+          - Key: Name
+            Value: TestProject
+            PropagateAtLaunch: True
+          - Key: DevOpsOwner
+            Value: Kavyesh S
+            PropagateAtLaunch: True
+          - Key: Region
+            Value: !Ref 'AWS::Region'
+            PropagateAtLaunch: True
+          - Key: Environment
+            Value: Development
+            PropagateAtLaunch: True
+      UpdatePolicy:
+        AutoScalingReplacingUpdate:
+          WillReplace: True
+
+    ALBSecurityGroup:
+      Type: 'AWS::EC2::SecurityGroup'
+      Properties:
+        VpcId: !Ref TestVPC
+        GroupDescription: Enable HTTP/HTTPS access
+        SecurityGroupIngress:
+          - IpProtocol: 'tcp'
+            FromPort: '80'
+            ToPort: '80'
+            CidrIp: 0.0.0.0/0
+          - IpProtocol: 'tcp'
+            FromPort: '443'
+            ToPort: '443'
+            CidrIp: 0.0.0.0/0
+        Tags:
+          - Key: Name
+            Value: TestProject
+          - Key: DevOpsOwner
+            Value: Kavyesh S
+          - Key: Region
+            Value: !Ref 'AWS::Region'
+          - Key: Environment
+            Value: Development
+
+    WebAppALB:
+      Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+      Properties:
+        IpAddressType: ipv4
+        Scheme: internet-facing
+        SecurityGroups:
+          - !Ref ALBSecurityGroup
+        Subnets:
+          - !Ref TestSubnet01
+          - !Ref TestSubnet02
+        Type: application
+        Tags:
+          - Key: Name
+            Value: TestProject
+          - Key: DevOpsOwner
+            Value: Kavyesh S
+          - Key: Region
+            Value: !Ref 'AWS::Region'
+          - Key: Environment
+            Value: Development
+
+    Listener:
+      Type: AWS::ElasticLoadBalancingV2::Listener
+      Properties:
+        DefaultActions:
+          - Type: forward
+            TargetGroupArn:
+              Ref: WebAppTargetGroup
+        LoadBalancerArn:
+          Ref: WebAppALB
+        Port: '80'
+        Protocol: HTTP
+  
+    WebAppTargetGroup:
+      Type: AWS::ElasticLoadBalancingV2::TargetGroup
+      Properties:
+        Port: '80'
+        Protocol: 'HTTP'
+        VpcId: !Ref TestVPC
+        HealthCheckIntervalSeconds: 30
+        HealthCheckPath: /
+        HealthCheckPort: 80
+        HealthCheckProtocol: HTTP
+        HealthCheckTimeoutSeconds: 5
+        HealthyThresholdCount: 2
+
+Outputs:
+  ALBDNS:
+    Description: Web App ALB DNS Name 
+    Value:
+      Fn::Join:
+        - ''
+        - - "http://"
+          - Fn::GetAtt: WebAppALB.DNSName
+  RDSDNS:
+    Description: RDS DNS Name
+    Value: !GetAtt MyDBInstance.Endpoint.Address
+  

@@ -6,35 +6,24 @@
 
 ### How to RUN
 
-1. Create a key pair first to access EC2
+1. Create CF Stack
 
-```bash deploy.sh create-ec2-key```
+```bash deploy.sh create```
 
-2. Create CF Stack
+2. Update CF Stack
 
-```bash deply.sh create```
+```bash deploy.sh update```
 
-3. Update CF Stack
+3. Delete CF Stack
 
-```bash deply.sh update```
-
-4. Delete CF Stack
-
-```bash deply.sh delete```
-
-5. Delete key pair of ec2
-
-```bash deply.sh delete-ec2-key```
+```bash deploy.sh delete```
 
 ---
 ### TO DO
 
--> ALB
-
--> ASG
-
--> Custom AMI
-
--> Nested stacks 
+- [x] ALB Creation
+- [x] ASG Creation
+- [ ] Custom AMI
+- [ ] Nested stacks
 
 https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-nested-stacks.html
