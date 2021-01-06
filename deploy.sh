@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [[ "$1" == "create" ]]; then
-   aws ec2 create-key-pair --key-name my-test-key --query 'KeyMaterial' --output text > my-test-key.pem
+#    aws ec2 create-key-pair --key-name my-test-key --query 'KeyMaterial' --output text > my-test-key.pem
    aws cloudformation create-stack --stack-name myteststack --template-body file://./aws/cloudformtaion-stack.yaml --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND 
    exit;
 fi
