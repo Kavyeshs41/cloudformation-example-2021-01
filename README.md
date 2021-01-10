@@ -1,10 +1,8 @@
 # cloudformation-stack example
-## This stack will create RDS instance and EC2 instance as well as vpc, sg, route tables, eips, rds password autoroate lambda etc..
+## This stack will create VPC Components, ALB in Public ASG in Private Subnets and Bastion host to access Private resources.
 
 ---
-
-
-### How to RUN
+### How to RUN (AWS CLI With Administrator Access Required)
 
 1. Create CF Stack
 
@@ -23,7 +21,7 @@
 
 - [x] ALB Creation
 - [x] ASG Creation
-- [ ] Custom AMI
+- [x] Custom AMI
 - [ ] Nested stacks
 
 https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-nested-stacks.html

@@ -1,10 +1,10 @@
 [
  {
-     "ParameterKey":"DBUser",
+     "ParameterKey":"MasterUserPassword",
      "ParameterValue":""
  },
  {
-    "ParameterKey":"DBPassword",
+    "ParameterKey":"MasterUsername",
     "ParameterValue":""
  }
 ]
