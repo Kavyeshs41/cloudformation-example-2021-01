@@ -2,12 +2,12 @@
 
 if [[ "$1" == "create" ]]; then
    aws ec2 create-key-pair --key-name my-test-key --query 'KeyMaterial' --output text > my-test-key.pem
-   aws cloudformation create-stack --stack-name myteststack --template-body file://./aws/cloudformtaion-stack.yaml --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --parameters file://./aws/wordpress-cf-stack-parameter.json
+   aws cloudformation create-stack --stack-name myteststack --template-body file://./aws/cloudformtaion-stack.yaml --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --parameters file://./aws/cf-stack-parameter.json
    exit;
 fi
 
 if [[ "$1" == "update" ]]; then
-   aws cloudformation update-stack --stack-name myteststack --template-body file://./aws/cloudformtaion-stack.yaml --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --parameters file://./aws/wordpress-cf-stack-parameter.json
+   aws cloudformation update-stack --stack-name myteststack --template-body file://./aws/cloudformtaion-stack.yaml --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --parameters file://./aws/cf-stack-parameter.json
    exit;
 fi
 

@@ -1,10 +1,10 @@
 [
  {
      "ParameterKey":"MasterUserPassword",
-     "ParameterValue":""
+     "ParameterValue":"test123"
  },
  {
     "ParameterKey":"MasterUsername",
-    "ParameterValue":""
+    "ParameterValue":"admin"
  }
 ]
